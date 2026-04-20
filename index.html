@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+html{background:#fdf6f0}
 body{background:#fdf6f0;font-family:Georgia,serif;color:#3a2e22;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
 .screen{width:100%;max-width:420px;text-align:center;animation:fadeIn .6s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -478,13 +479,13 @@ function answerJug(btn,correct){
 }
 
 /* ===== S5: MEMORY ===== */
-const symbols=['🌙','⭐','🔮','🌸','🕯️','💫','🌿','🦋'];
+const symbols=['🌙','⭐','🔮','🌸','🕯️','💫','🌿','🦋','🌺','🔯','🪬','✨'];
 let memCards,memFlipped,memMatched,memTimer,memSecs,memLocked;
 function initMemory(){
   memFlipped=[];memMatched=0;memSecs=90;memLocked=false;
   clearInterval(memTimer);
   document.getElementById('mem-err').textContent='';
-  document.getElementById('mem-counter').textContent='Parejas: 0 / 8';
+      document.getElementById('mem-counter').textContent='Parejas: 0 / 12';
   memCards=shuffle([...symbols,...symbols]);
   renderMemory();
   memTimer=setInterval(tickMem,1000);
@@ -509,8 +510,8 @@ function checkPair(){
     a.classList.add('matched');b.classList.add('matched');
     a.classList.remove('flipped');b.classList.remove('flipped');
     memMatched++;
-    document.getElementById('mem-counter').textContent='Parejas: '+memMatched+' / 8';
-    if(memMatched===8){clearInterval(memTimer);setTimeout(()=>{showScreen(6);initEscape();},800);}
+    document.getElementById('mem-counter').textContent='Parejas: '+memMatched+' / 12';
+    if(memMatched===12){clearInterval(memTimer);setTimeout(()=>{showScreen(6);initEscape();},800);}
   } else {
     a.classList.remove('flipped');b.classList.remove('flipped');
     a.classList.add('back');b.classList.add('back');
