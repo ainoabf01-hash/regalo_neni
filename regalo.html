@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#fdf6f0;font-family:Georgia,serif;color:#3a2e22;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.screen{width:100%;max-width:420px;text-align:center;animation:fadeIn .6s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:1.5rem;color:#b6914e;margin-bottom:.5rem;font-style:italic}
+h2{font-size:1.1rem;color:#b6914e;margin-bottom:1rem}
+p{font-size:.95rem;line-height:1.7;color:#5a4a38;margin-bottom:1rem}
+.card-box{background:#fff8f2;border:1px solid #e0c9a8;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(182,145,78,.08)}
+.btn{background:#b6914e;color:#fff8f2;border:none;border-radius:8px;padding:12px 28px;font-family:Georgia,serif;font-size:1rem;cursor:pointer;margin:6px;transition:background .2s}
+.btn:hover{background:#9a7940}
+.progress{display:flex;justify-content:center;gap:8px;margin-bottom:16px}
+.dot{width:10px;height:10px;border-radius:50%;background:#e0c9a8}
+.dot.active{background:#b6914e}
+.dot.done{background:#7ab88a}
+.options-grid{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.opt-btn{background:#fff8f2;border:1.5px solid #e0c9a8;border-radius:8px;padding:12px 16px;font-family:Georgia,serif;font-size:.9rem;cursor:pointer;text-align:left;transition:all .2s;color:#3a2e22}
+.opt-btn:hover{border-color:#b6914e;background:#f5ede6}
+.opt-btn.correct{background:#eaf6ec;border-color:#7ab88a;color:#2d6e3c}
+.opt-btn.wrong{background:#fdecea;border-color:#c0392b;color:#8b1a1a}
+.counter{font-size:.85rem;color:#9a7940;margin-bottom:12px}
+.puzzleWrap{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.puzzleImg{position:relative;border:1.5px solid #e0c9a8;border-radius:8px;overflow:hidden}
+.mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.mem-card{aspect-ratio:1;border-radius:8px;border:1.5px solid #e0c9a8;background:#fff8f2;display:flex;align-items:center;justify-content:center;font-size:1.6rem;cursor:pointer;transition:all .3s;user-select:none}
+.mem-card.flipped{background:#f5ede6;border-color:#b6914e}
+.mem-card.matched{background:#eaf6ec;border-color:#7ab88a;cursor:default}
+.mem-card.back{background:#fdf0e0;font-size:.6rem;color:#b6914e}
+.timer{font-size:1.1rem;font-weight:bold;color:#b6914e;margin-bottom:8px}
+.err-msg{color:#c0392b;font-size:.85rem;margin-top:8px;min-height:20px}
+.ok-msg{color:#2d6e3c;font-size:.85rem;margin-top:8px}
+.hidden{display:none}
+.badge-paso{display:inline-block;background:#f5ede6;border:1px solid #e0c9a8;border-radius:20px;padding:4px 14px;font-size:.8rem;color:#9a7940;margin-bottom:12px}
+/* AHORCADO */
+.hang-word{display:flex;justify-content:center;gap:8px;margin:16px 0;flex-wrap:wrap}
+.hang-letter{width:28px;height:36px;border-bottom:2px solid #b6914e;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:bold;color:#b6914e;text-transform:uppercase}
+.hang-keys{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
+.key-btn{width:32px;height:32px;border-radius:6px;border:1.5px solid #e0c9a8;background:#fff8f2;font-family:Georgia,serif;font-size:.85rem;cursor:pointer;color:#3a2e22;transition:all .2s}
+.key-btn:hover:not(:disabled){border-color:#b6914e;background:#f5ede6}
+.key-btn:disabled{opacity:.35;cursor:default}
+.key-btn.hit{background:#eaf6ec;border-color:#7ab88a;color:#2d6e3c}
+.key-btn.miss{background:#fdecea;border-color:#c0392b;color:#8b1a1a}
+.hang-svg{margin:8px auto;display:block}
+/* ESCAPE ROOM */
+.candado{font-size:3rem;margin:8px 0}
+.pista-box{background:#f5ede6;border:1px solid #e0c9a8;border-radius:10px;padding:14px;margin:10px 0;font-size:.9rem;font-style:italic;color:#5a4a38}
+.code-input{display:flex;justify-content:center;gap:8px;margin:12px 0}
+.code-digit{width:44px;height:52px;border:2px solid #e0c9a8;border-radius:8px;background:#fff8f2;text-align:center;font-family:Georgia,serif;font-size:1.4rem;color:#b6914e;outline:none}
+.code-digit:focus{border-color:#b6914e}
+/* ENHORABUENA */
+.enhorabuena{background:linear-gradient(145deg,#fff8f2,#fdf6f0);border:2px solid #b6914e;border-radius:20px;padding:32px 24px;text-align:center}
+.enhorabuena h1{font-size:2rem;color:#b6914e;font-style:italic;margin-bottom:8px}
+.enhorabuena .sub{font-size:1rem;color:#5a4a38;line-height:1.8}
+/* VALE */
+.vale{background:linear-gradient(145deg,#fff8f2,#fdf6f0);border:2px solid #b6914e;border-radius:20px;padding:32px 24px;text-align:center}
+.vale-deco{fill:none;stroke:#b6914e;stroke-width:1.2}
+.vale h1{font-size:1.1rem;color:#9a7940;letter-spacing:.15em;margin-bottom:16px;font-style:normal;text-transform:uppercase}
+.vale h2{font-size:1.6rem;color:#b6914e;margin-bottom:8px;line-height:1.4}
+.vale .firma{font-size:.85rem;color:#9a7940;margin-top:16px;border-top:1px solid #e0c9a8;padding-top:12px}
+</style>
+</head>
+<body>
+
+<!-- S0: PORTADA -->
+<div id="s0" class="screen">
+  <div class="card-box">
+    <div style="font-size:2rem;margin-bottom:.5rem">☽</div>
+    <h1>Para Manina</h1>
+    <p style="font-size:1rem">Has llegado hasta aquí por algo.<br>Supera las 6 pruebas y descubrirás tu regalo…</p>
+    <svg width="120" height="70" viewBox="0 0 120 70" style="margin:12px auto;display:block">
+      <rect x="15" y="8" width="38" height="52" rx="5" fill="none" stroke="#e0c9a8" stroke-width="1.2"/>
+      <rect x="67" y="8" width="38" height="52" rx="5" fill="none" stroke="#e0c9a8" stroke-width="1.2"/>
+      <path d="M25 30 Q34 20 44 30" fill="none" stroke="#b6914e" stroke-width="1.2"/>
+      <circle cx="34" cy="42" r="5" fill="none" stroke="#b6914e" stroke-width="1.2"/>
+      <path d="M77 22 Q86 14 95 22" fill="none" stroke="#b6914e" stroke-width="1.2"/>
+      <line x1="77" y1="38" x2="95" y2="38" stroke="#b6914e" stroke-width="1.2"/>
+      <line x1="77" y1="46" x2="88" y2="46" stroke="#b6914e" stroke-width="1.2"/>
+    </svg>
+    <p style="font-size:.85rem;font-style:italic;color:#9a7940">"Un espacio de claridad, intuición y mensaje."</p>
+    <button class="btn" onclick="showScreen(1);initCaps();" style="margin-top:16px">Empezar ✦</button>
+  </div>
+</div>
+
+<!-- S1: CAPITALES -->
+<div id="s1" class="screen hidden">
+  <div class="badge-paso">Prueba 1 de 6</div>
+  <div class="card-box">
+    <h2>Capitales del Mundo</h2>
+    <div class="progress" id="prog1"></div>
+    <p class="counter" id="cap-counter"></p>
+    <p id="cap-pregunta" style="font-weight:bold;font-size:1rem;color:#3a2e22;margin-bottom:8px"></p>
+    <div class="options-grid" id="cap-opts"></div>
+    <p class="err-msg" id="cap-err"></p>
+  </div>
+</div>
+
+<!-- S2: AHORCADO -->
+<div id="s2" class="screen hidden">
+  <div class="badge-paso">Prueba 2 de 6</div>
+  <div class="card-box">
+    <h2>El Ahorcado</h2>
+    <p style="font-size:.8rem;margin-bottom:4px">Adivina esta palabra que usas mucho · 5 fallos máximo</p>
+    <svg class="hang-svg" width="100" height="110" viewBox="0 0 100 110" id="hang-svg">
+      <line x1="10" y1="105" x2="90" y2="105" stroke="#e0c9a8" stroke-width="2"/>
+      <line x1="30" y1="105" x2="30" y2="5" stroke="#e0c9a8" stroke-width="2"/>
+      <line x1="30" y1="5" x2="65" y2="5" stroke="#e0c9a8" stroke-width="2"/>
+      <line x1="65" y1="5" x2="65" y2="20" stroke="#e0c9a8" stroke-width="2"/>
+      <!-- partes del cuerpo, se muestran con JS -->
+      <circle id="hg-head" cx="65" cy="28" r="8" fill="none" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+      <line id="hg-body" x1="65" y1="36" x2="65" y2="65" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+      <line id="hg-larm" x1="65" y1="45" x2="50" y2="58" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+      <line id="hg-rarm" x1="65" y1="45" x2="80" y2="58" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+      <line id="hg-lleg" x1="65" y1="65" x2="50" y2="82" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+      <line id="hg-rleg" x1="65" y1="65" x2="80" y2="82" stroke="#b6914e" stroke-width="1.5" class="hidden"/>
+    </svg>
+    <p class="counter" id="hang-fallos">Fallos: 0 / 5</p>
+    <div class="hang-word" id="hang-word"></div>
+    <div class="hang-keys" id="hang-keys"></div>
+    <p class="err-msg" id="hang-err"></p>
+    <p class="ok-msg hidden" id="hang-ok">¡Foriata! ¡Lo has adivinado! ✦</p>
+  </div>
+</div>
+
+<!-- S3: 5 DIFERENCIAS -->
+<div id="s3" class="screen hidden">
+  <div class="badge-paso">Prueba 3 de 6</div>
+  <div class="card-box">
+    <h2>Encuentra las 5 Diferencias</h2>
+    <p style="font-size:.85rem">Toca sobre la imagen de la <strong>derecha</strong> donde veas algo diferente</p>
+    <p class="counter" id="diff-counter">Encontradas: 0 / 5</p>
+    <div class="puzzleWrap" id="puzzleWrap"></div>
+    <p class="err-msg" id="diff-err"></p>
+    <p class="ok-msg hidden" id="diff-ok">¡Las has encontrado todas! ✦</p>
+  </div>
+</div>
+
+<!-- S4: JUGARRETAS -->
+<div id="s4" class="screen hidden">
+  <div class="badge-paso">Prueba 4 de 6</div>
+  <div class="card-box">
+    <h2>Jugarretas en Asthor Agrícola</h2>
+    <p style="font-size:.85rem;margin-bottom:4px">Tus compañeros tienen una jugada preparada. ¿Cómo respondes?</p>
+    <div id="jug-persona" style="font-size:1.5rem;margin:8px 0"></div>
+    <p id="jug-nombre" style="font-weight:bold;color:#b6914e;margin-bottom:4px"></p>
+    <p id="jug-situacion" style="font-style:italic;font-size:.9rem;margin-bottom:12px;color:#5a4a38"></p>
+    <div class="options-grid" id="jug-opts"></div>
+    <p class="err-msg" id="jug-msg"></p>
+  </div>
+</div>
+
+<!-- S5: MEMORY -->
+<div id="s5" class="screen hidden">
+  <div class="badge-paso">Prueba 5 de 6</div>
+  <div class="card-box">
+    <h2>Memory Místico</h2>
+    <div class="timer" id="mem-timer">⏱ 1:30</div>
+    <p class="counter" id="mem-counter">Parejas: 0 / 8</p>
+    <div class="mem-grid" id="mem-grid"></div>
+    <p class="err-msg" id="mem-err"></p>
+  </div>
+</div>
+
+<!-- S6: ESCAPE ROOM -->
+<div id="s6" class="screen hidden">
+  <div class="badge-paso">Prueba 6 de 6</div>
+  <div class="card-box">
+    <h2>Escape Room Místico</h2>
+    <p style="font-size:.85rem">Resuelve las 3 pistas y abre el candado de 3 dígitos</p>
+    <div class="candado" id="esc-lock">🔒</div>
+    <div id="esc-pistas"></div>
+    <div class="code-input">
+      <input class="code-digit" id="cd1" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+      <input class="code-digit" id="cd2" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+      <input class="code-digit" id="cd3" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"/>
+    </div>
+    <button class="btn" onclick="checkCandado()">Abrir candado</button>
+    <p class="err-msg" id="esc-err"></p>
+  </div>
+</div>
+
+<!-- S7: ENHORABUENA -->
+<div id="s7" class="screen hidden">
+  <div class="enhorabuena">
+    <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+    <h1>¡Lo has conseguido, Manina!</h1>
+    <p class="sub" style="margin-top:12px">
+      Has sobrevivido a Juanma, a Pilar, a Fran y a Patricia.<br>
+      Has adivinado palabras en asturiano.<br>
+      Has encontrado diferencias donde otros no ven nada.<br>
+      Y has abierto el candado del universo.<br><br>
+      <strong style="color:#b6914e">¡FELIZ CUMPLEAÑOS, NENI!</strong> 🥂✨
+    </p>
+    <button class="btn" onclick="showScreen(8)" style="margin-top:20px">Ver tu regalo ✦</button>
+  </div>
+</div>
+
+<!-- S8: VALE FINAL -->
+<div id="s8" class="screen hidden">
+  <div class="vale">
+    <svg width="200" height="60" viewBox="0 0 200 60" style="margin:0 auto 16px;display:block">
+      <path d="M30 40 Q50 10 70 30 Q90 50 110 20 Q130 0 150 25 Q165 40 175 30" fill="none" stroke="#b6914e" stroke-width="1"/>
+      <circle cx="20" cy="38" r="3" fill="#b6914e" opacity=".5"/>
+      <circle cx="180" cy="28" r="2" fill="#b6914e" opacity=".4"/>
+      <path d="M90 48 Q100 38 110 48" fill="none" stroke="#b6914e" stroke-width=".8"/>
+      <polygon points="100,8 102,14 108,14 103,18 105,24 100,20 95,24 97,18 92,14 98,14" fill="none" stroke="#b6914e" stroke-width=".8" opacity=".6"/>
+      <circle cx="100" cy="55" r="1.5" fill="#b6914e" opacity=".4"/>
+      <circle cx="60" cy="52" r="1" fill="#b6914e" opacity=".3"/>
+      <circle cx="140" cy="50" r="1" fill="#b6914e" opacity=".3"/>
+    </svg>
+    <h1>Para Manina</h1>
+    <h2>Una sesión especial de tarot y mediunidad con Ángeles</h2>
+    <div class="firma">Con todo el amor de tu hermana · 2026</div>
+  </div>
+</div>
+
+<script>
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('s'+n).classList.remove('hidden');
+}
+function shuffle(arr){return arr.sort(()=>Math.random()-.5);}
+
+/* ===== S1: CAPITALES ===== */
+const allCaps=[
+  {p:"¿Cuál es la capital de Australia?",r:"Canberra",w:["Sídney","Melbourne","Brisbane"]},
+  {p:"¿Cuál es la capital de Canadá?",r:"Ottawa",w:["Toronto","Vancouver","Montreal"]},
+  {p:"¿Cuál es la capital de Brasil?",r:"Brasilia",w:["Río de Janeiro","São Paulo","Salvador"]},
+  {p:"¿Cuál es la capital de Nueva Zelanda?",r:"Wellington",w:["Auckland","Christchurch","Hamilton"]},
+  {p:"¿Cuál es la capital de Suiza?",r:"Berna",w:["Ginebra","Zúrich","Lausana"]},
+  {p:"¿Cuál es la capital de India?",r:"Nueva Delhi",w:["Bombay","Calcuta","Bangalore"]},
+  {p:"¿Cuál es la capital de Sudáfrica?",r:"Pretoria",w:["Ciudad del Cabo","Johannesburgo","Durban"]},
+  {p:"¿Cuál es la capital de Pakistán?",r:"Islamabad",w:["Karachi","Lahore","Rawalpindi"]},
+  {p:"¿Cuál es la capital de Argentina?",r:"Buenos Aires",w:["Córdoba","Rosario","Mendoza"]},
+  {p:"¿Cuál es la capital de Nigeria?",r:"Abuja",w:["Lagos","Kano","Ibadán"]},
+  {p:"¿Cuál es la capital de Myanmar?",r:"Naipyidó",w:["Rangún","Mandalay","Bago"]},
+  {p:"¿Cuál es la capital de Kazajistán?",r:"Astana",w:["Almatý","Shymkent","Karagandá"]},
+  {p:"¿Cuál es la capital de Indonesia?",r:"Yakarta",w:["Bali","Surabaya","Bandung"]},
+  {p:"¿Cuál es la capital de Tanzania?",r:"Dodoma",w:["Dar es Salam","Mwanza","Arusha"]},
+  {p:"¿Cuál es la capital de Bolivia?",r:"Sucre",w:["La Paz","Cochabamba","Santa Cruz"]}
+];
+let capPregs,capIdx,capFallos;
+
+function initCaps(){
+  capIdx=0;capFallos=0;
+  capPregs=shuffle([...allCaps]).slice(0,6);
+  renderCapProgress();showCap();
+}
+function renderCapProgress(){
+  document.getElementById('prog1').innerHTML=capPregs.map((_,i)=>
+    `<div class="dot${i<capIdx?' done':i===capIdx?' active':''}"></div>`).join('');
+}
+function showCap(){
+  if(capIdx>=capPregs.length){showScreen(2);initHang();return;}
+  const q=capPregs[capIdx];
+  document.getElementById('cap-pregunta').textContent=q.p;
+  document.getElementById('cap-counter').textContent=`Pregunta ${capIdx+1} de ${capPregs.length} · Fallos: ${capFallos}/1`;
+  document.getElementById('cap-err').textContent='';
+  const opts=shuffle([q.r,...q.w.slice(0,3)]);
+  const cont=document.getElementById('cap-opts');
+  cont.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='opt-btn';b.textContent=o;
+    b.onclick=()=>answerCap(b,o===q.r,q.r);
+    cont.appendChild(b);
+  });
+  renderCapProgress();
+}
+function answerCap(btn,correct,correctAns){
+  document.querySelectorAll('#cap-opts .opt-btn').forEach(b=>b.onclick=null);
+  if(correct){
+    btn.classList.add('correct');capIdx++;
+    setTimeout(showCap,700);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#cap-opts .opt-btn').forEach(b=>{if(b.textContent===correctAns)b.classList.add('correct');});
+    capFallos++;
+    if(capFallos>1){
+      document.getElementById('cap-err').textContent='¡Dos fallos! Vuelta al principio… 🔄';
+      setTimeout(initCaps,2000);
+    } else {
+      document.getElementById('cap-err').textContent='Un fallo… ¡te queda uno más!';
+      setTimeout(()=>{capIdx++;showCap();},1200);
+    }
+  }
+}
+
+/* ===== S2: AHORCADO ===== */
+const hangWord='FORIATA';
+const hangParts=['hg-head','hg-body','hg-larm','hg-rarm','hg-lleg','hg-rleg'];
+let hangGuessed,hangFallos,hangOver;
+
+function initHang(){
+  hangGuessed=[];hangFallos=0;hangOver=false;
+  document.getElementById('hang-err').textContent='';
+  document.getElementById('hang-ok').classList.add('hidden');
+  hangParts.forEach(id=>document.getElementById(id).classList.add('hidden'));
+  renderHangWord();
+  renderHangKeys();
+  document.getElementById('hang-fallos').textContent='Fallos: 0 / 5';
+}
+function renderHangWord(){
+  const cont=document.getElementById('hang-word');
+  cont.innerHTML=hangWord.split('').map(l=>
+    `<div class="hang-letter">${hangGuessed.includes(l)?l:''}</div>`
+  ).join('');
+}
+function renderHangKeys(){
+  const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const cont=document.getElementById('hang-keys');
+  cont.innerHTML='';
+  letters.forEach(l=>{
+    const b=document.createElement('button');
+    b.className='key-btn';b.textContent=l;
+    const hit=hangWord.includes(l)&&hangGuessed.includes(l);
+    const miss=!hangWord.includes(l)&&hangGuessed.includes(l);
+    if(hit)b.classList.add('hit');
+    if(miss)b.classList.add('miss');
+    if(hangGuessed.includes(l))b.disabled=true;
+    b.onclick=()=>guessLetter(l);
+    cont.appendChild(b);
+  });
+}
+function guessLetter(l){
+  if(hangOver||hangGuessed.includes(l))return;
+  hangGuessed.push(l);
+  if(!hangWord.includes(l)){
+    hangFallos++;
+    if(hangFallos<=hangParts.length)
+      document.getElementById(hangParts[hangFallos-1]).classList.remove('hidden');
+    document.getElementById('hang-fallos').textContent=`Fallos: ${hangFallos} / 5`;
+    if(hangFallos>=5){
+      hangOver=true;
+      document.getElementById('hang-err').textContent='¡Uy! A volver a intentarlo… 🔄';
+      setTimeout(initHang,2000);return;
+    }
+  }
+  renderHangWord();renderHangKeys();
+  if(hangWord.split('').every(l=>hangGuessed.includes(l))){
+    hangOver=true;
+    document.getElementById('hang-ok').classList.remove('hidden');
+    setTimeout(()=>{showScreen(3);initDiff();},1800);
+  }
+}
+
+/* ===== S3: 5 DIFERENCIAS ===== */
+const diffs=[
+  {x:50,y:18,r:20,label:'luna'},
+  {x:18,y:15,r:14,label:'estrella'},
+  {x:50,y:52,r:16,label:'figura'},
+  {x:78,y:62,r:14,label:'sonrisa'},
+  {x:50,y:88,r:14,label:'barra'}
+];
+let foundDiffs=[];
+
+function initDiff(){
+  foundDiffs=[];
+  document.getElementById('diff-counter').textContent='Encontradas: 0 / 5';
+  document.getElementById('diff-err').textContent='';
+  document.getElementById('diff-ok').classList.add('hidden');
+  const wrap=document.getElementById('puzzleWrap');
+  wrap.innerHTML='';
+  const W=140,H=200;
+  const dL=document.createElement('div');
+  dL.className='puzzleImg';dL.style.cssText='width:'+W+'px;height:'+H+'px';
+  dL.innerHTML=makeTarotSVG(W,H,false);wrap.appendChild(dL);
+  const dR=document.createElement('div');
+  dR.className='puzzleImg';dR.style.cssText='width:'+W+'px;height:'+H+'px';
+  dR.innerHTML=makeTarotSVG(W,H,true);
+  const svgEl=dR.querySelector('svg');
+  svgEl.style.cursor='crosshair';svgEl.style.display='block';
+  svgEl.addEventListener('click',e=>{
+    const rect=svgEl.getBoundingClientRect();
+    const px=((e.clientX-rect.left)/rect.width)*100;
+    const py=((e.clientY-rect.top)/rect.height)*100;
+    checkDiff(px,py,svgEl);
+  });
+  wrap.appendChild(dR);
+}
+function makeTarotSVG(W,H,mod){
+  return `<svg width="${W}" height="${H}" viewBox="0 0 100 100" style="border-radius:6px;display:block" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" fill="#fff8f2"/>
+  <rect x="4" y="4" width="92" height="92" rx="4" fill="none" stroke="#e0c9a8" stroke-width="1"/>
+  ${mod?'<circle cx="50" cy="18" r="8" fill="#e0c9a8"/>':'<path d="M44,12 A8,8 0 1,0 44,24 A6,6 0 1,1 44,12" fill="#e0c9a8"/>'}
+  ${mod?'':'<polygon points="18,12 19.5,17 24,17 20.5,20 22,25 18,22 14,25 15.5,20 12,17 16.5,17" fill="#b6914e" opacity=".7"/>'}
+  ${mod?'<rect x="36" y="38" width="28" height="22" rx="2" fill="none" stroke="#b6914e" stroke-width="1.2"/>':'<ellipse cx="50" cy="49" rx="14" ry="11" fill="none" stroke="#b6914e" stroke-width="1.2"/>'}
+  <ellipse cx="50" cy="49" rx="6" ry="4" fill="none" stroke="#9a7940" stroke-width=".8"/>
+  <circle cx="50" cy="49" r="2" fill="#b6914e" opacity=".6"/>
+  ${mod?'<path d="M68,58 Q78,52 88,58" fill="none" stroke="#b6914e" stroke-width="1.2"/>':'<path d="M68,54 Q78,62 88,54" fill="none" stroke="#b6914e" stroke-width="1.2"/>'}
+  ${mod?'<line x1="30" y1="88" x2="70" y2="88" stroke="#b6914e" stroke-width="1.2"/>':'<line x1="15" y1="88" x2="85" y2="88" stroke="#b6914e" stroke-width="1.2"/>'}
+  <circle cx="80" cy="15" r="1.5" fill="#b6914e" opacity=".5"/>
+  <circle cx="85" cy="25" r="1" fill="#b6914e" opacity=".4"/>
+  </svg>`;
+}
+function checkDiff(px,py,svgEl){
+  for(let i=0;i<diffs.length;i++){
+    const d=diffs[i];
+    if(foundDiffs.includes(i))continue;
+    if(Math.sqrt((px-d.x)**2+(py-d.y)**2)<d.r){
+      foundDiffs.push(i);
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',d.x);c.setAttribute('cy',d.y);c.setAttribute('r','7');
+      c.setAttribute('fill','rgba(182,145,78,0.25)');c.setAttribute('stroke','#b6914e');c.setAttribute('stroke-width','1.5');
+      svgEl.appendChild(c);
+      document.getElementById('diff-counter').textContent='Encontradas: '+foundDiffs.length+' / 5';
+      document.getElementById('diff-err').textContent='';
+      if(foundDiffs.length===5){
+        document.getElementById('diff-ok').classList.remove('hidden');
+        setTimeout(()=>{showScreen(4);initJug();},1500);
+      }
+      return;
+    }
+  }
+  document.getElementById('diff-err').textContent='Hmm, aquí no hay ninguna diferencia…';
+}
+
+/* ===== S4: JUGARRETAS ===== */
+const personas=[
+  {emoji:'🤏',nombre:'Juanma',desc:'— Tu jefe (en teoría)',
+   sit:'"Jenni, te dejo esto que yo tengo una reunión muy importante..." — spoiler: la reunión es en su casa.',
+   correctIdx:0,
+   opts:['Documentas todo lo que hiciste y lo dejas bien claro en el email de seguimiento.',
+         'Aceptar el trabajo sin decir nada. Total, ya estás acostumbrada.',
+         'Tomar el ejemplo de tu jefe y te vas a casa también.']},
+  {emoji:'👱‍♀️',nombre:'Pilar',desc:'— La heredera autoproclamada',
+   sit:'Pilar lleva 3 lunes "malísima". Hoy hay junta de resultados y misteriosamente está sana.',
+   correctIdx:1,
+   opts:['Te alegras de que se haya recuperado justo a tiempo y sigues con tu trabajo.',
+         'Le preguntas si el médico ha descubierto la cura del lunes crónico.',
+         'Te apuntas también para estar enferma el próximo lunes, por si acaso.']},
+  {emoji:'🤴',nombre:'Fran',desc:'— El otro heredero autoproclamado',
+   sit:'Entra al despacho y suelta muy serio: "Cuando yo herede la empresa, las cosas van a cambiar por aquí."',
+   correctIdx:0,
+   opts:['Responder muy tranquila: "Claro, Fran. ¿Y para cuándo tienes prevista la herencia?" — y volver a la pantalla sin esperar respuesta.',
+         'Soltar una carcajada espontánea e incontrolable.',
+         'Ignorarle completamente y seguir a lo tuyo.']},
+  {emoji:'💬',nombre:'Patricia',desc:'— La compañera de despacho',
+   sit:'"Oye Jenni, ¿crees que habrán terminado ya de cargar el camión?" Es la séptima pregunta imposible del día, son las 8:23.',
+   correctIdx:2,
+   opts:['Ponerte los auriculares y fingir que no la oyes.',
+         'Responder a cada pregunta con otra pregunta igual de imposible.',
+         'Pegarle un post-it en la pantalla: "Patricia, pregunta directamente al taller ☎️ ext. 34"']}
+];
+let jugIdx=0;
+function initJug(){jugIdx=0;renderJug();}
+function renderJug(){
+  if(jugIdx>=personas.length){showScreen(5);initMemory();return;}
+  const p=personas[jugIdx];
+  document.getElementById('jug-persona').textContent=p.emoji;
+  document.getElementById('jug-nombre').textContent=p.nombre+' '+p.desc;
+  document.getElementById('jug-situacion').textContent=p.sit;
+  document.getElementById('jug-msg').textContent='';
+  const cont=document.getElementById('jug-opts');cont.innerHTML='';
+  p.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='opt-btn';b.textContent=o;
+    b.onclick=()=>answerJug(b,i===p.correctIdx);
+    cont.appendChild(b);
+  });
+}
+function answerJug(btn,correct){
+  document.querySelectorAll('#jug-opts .opt-btn').forEach(b=>b.onclick=null);
+  if(correct){btn.classList.add('correct');jugIdx++;setTimeout(renderJug,900);}
+  else{
+    btn.classList.add('wrong');
+    document.getElementById('jug-msg').textContent='Hmmm… brillante, pero no es la respuesta más sabia. 😏';
+    setTimeout(()=>{
+      btn.classList.remove('wrong');
+      document.getElementById('jug-msg').textContent='';
+      const p=personas[jugIdx];
+      document.querySelectorAll('#jug-opts .opt-btn').forEach((b,i)=>b.onclick=()=>answerJug(b,i===p.correctIdx));
+    },1200);
+  }
+}
+
+/* ===== S5: MEMORY ===== */
+const symbols=['🌙','⭐','🔮','🌸','🕯️','💫','🌿','🦋'];
+let memCards,memFlipped,memMatched,memTimer,memSecs,memLocked;
+function initMemory(){
+  memFlipped=[];memMatched=0;memSecs=90;memLocked=false;
+  clearInterval(memTimer);
+  document.getElementById('mem-err').textContent='';
+  document.getElementById('mem-counter').textContent='Parejas: 0 / 8';
+  memCards=shuffle([...symbols,...symbols]);
+  renderMemory();
+  memTimer=setInterval(tickMem,1000);
+}
+function renderMemory(){
+  const grid=document.getElementById('mem-grid');grid.innerHTML='';
+  memCards.forEach((sym,i)=>{
+    const c=document.createElement('div');
+    c.className='mem-card back';c.dataset.idx=i;c.dataset.sym=sym;c.textContent='✦';
+    c.onclick=()=>flipCard(c);grid.appendChild(c);
+  });
+}
+function flipCard(card){
+  if(memLocked||card.classList.contains('flipped')||card.classList.contains('matched'))return;
+  card.classList.remove('back');card.classList.add('flipped');card.textContent=card.dataset.sym;
+  memFlipped.push(card);
+  if(memFlipped.length===2){memLocked=true;setTimeout(checkPair,600);}
+}
+function checkPair(){
+  const[a,b]=memFlipped;
+  if(a.dataset.sym===b.dataset.sym){
+    a.classList.add('matched');b.classList.add('matched');
+    a.classList.remove('flipped');b.classList.remove('flipped');
+    memMatched++;
+    document.getElementById('mem-counter').textContent='Parejas: '+memMatched+' / 8';
+    if(memMatched===8){clearInterval(memTimer);setTimeout(()=>{showScreen(6);initEscape();},800);}
+  } else {
+    a.classList.remove('flipped');b.classList.remove('flipped');
+    a.classList.add('back');b.classList.add('back');
+    a.textContent='✦';b.textContent='✦';
+  }
+  memFlipped=[];memLocked=false;
+}
+function tickMem(){
+  memSecs--;
+  const m=Math.floor(memSecs/60),s=memSecs%60;
+  document.getElementById('mem-timer').textContent='⏱ '+m+':'+(s<10?'0':'')+s;
+  if(memSecs<=0){
+    clearInterval(memTimer);
+    document.getElementById('mem-err').textContent='¡Se acabó el tiempo! Vuelta a empezar… 🔄';
+    setTimeout(initMemory,2000);
+  }
+}
+
+/* ===== S6: ESCAPE ROOM ===== */
+// Código: 3 · 8 · 6
+// Pista 1 → 3: "Jenni tiene dos gatos en casa. Súmale el número de hermanas que tiene. ¿Cuántos son?"  (Freddy+Lola=2, +1 hermana = 3)
+// Pista 2 → 8: "El año en que Ainoa cumplió 28 años, ¿qué dígito de esa edad va en el candado?" (2008 → pero no, usemos algo más directo)
+// Usamos pistas de cultura Jenni/Ainoa
+const escPistas=[
+  {texto:'🔢 ¿Qué número sigue en la secuencia?<br><strong>2 · 6 · 12 · 20 · 30 · __</strong><br><em>Pista: fíjate en las diferencias entre números.</em><br>Toma el primer dígito del resultado.'},
+  {texto:'👴👧 Pedro tiene el doble de años que Ana. La suma de sus edades es 33. ¿Cuántos años tiene Ana?<br>Ese número es el segundo dígito del candado.'},
+  {texto:'🍎🍌 Una manzana cuesta 1€ más que un plátano. Juntas cuestan 3€. ¿Cuánto cuesta la manzana?<br>Ese número es el tercer dígito del candado.'}
+];
+const escCodigo=['4','1','2'];
+
+function initEscape(){
+  document.getElementById('esc-err').textContent='';
+  document.getElementById('esc-lock').textContent='🔒';
+  ['cd1','cd2','cd3'].forEach(id=>{document.getElementById(id).value='';});
+  const cont=document.getElementById('esc-pistas');
+  cont.innerHTML=escPistas.map(p=>`<div class="pista-box">${p.texto}</div>`).join('');
+  document.getElementById('cd1').focus();
+  // auto-avance entre dígitos
+  ['cd1','cd2','cd3'].forEach((id,i,arr)=>{
+    document.getElementById(id).addEventListener('input',function(){
+      this.value=this.value.replace(/\D/,'').slice(-1);
+      if(this.value&&arr[i+1])document.getElementById(arr[i+1]).focus();
+    });
+  });
+}
+function checkCandado(){
+  const v=['cd1','cd2','cd3'].map(id=>document.getElementById(id).value.trim());
+  if(v.join('')===escCodigo.join('')){
+    document.getElementById('esc-lock').textContent='🔓';
+    document.getElementById('esc-err').style.color='#2d6e3c';
+    document.getElementById('esc-err').textContent='¡Candado abierto! ✦';
+    setTimeout(()=>{showScreen(7);},1500);
+  } else {
+    document.getElementById('esc-err').style.color='#c0392b';
+    document.getElementById('esc-err').textContent='Código incorrecto… vuelve a intentarlo.';
+    ['cd1','cd2','cd3'].forEach(id=>{document.getElementById(id).value='';});
+    document.getElementById('cd1').focus();
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>
